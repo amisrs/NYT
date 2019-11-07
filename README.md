@@ -8,7 +8,7 @@ You will need to know how everything in this app works to be able to continue in
 - Convert Book class to a Room entity.
 - Add BookDao interface defining database interactions for the Book entity.
 - Add AppDatabase class containing a getInstance method to access a singleton instance of the database.
-- Modify BookRecyclerFragment to save Books to the database after fetching from API, and then displaying books from the database.
+- Modify BookRecyclerFragment to save Books to the database after fetching from API, and then display books from the database.
 - Update BookDetailActivity to retrieve book data from real database.
 
 **Week 7**

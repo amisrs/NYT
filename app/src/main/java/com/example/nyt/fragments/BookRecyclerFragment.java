@@ -23,6 +23,7 @@ import com.example.nyt.BookAdapter;
 import com.example.nyt.FakeAPI;
 import com.example.nyt.FakeDatabase;
 import com.example.nyt.R;
+import com.example.nyt.database.AppDatabase;
 import com.example.nyt.model.BestsellerList;
 import com.example.nyt.model.BestsellerListResponse;
 import com.example.nyt.model.Book;
@@ -92,9 +93,18 @@ public class BookRecyclerFragment extends Fragment {
                 List<Book> bestsellers = bestsellerList.getBooks();
 
                 // I save my results to the database so I can retrieve it later in my other activities.
-                FakeDatabase.saveBooksToFakeDatabase(bestsellers);
+                AppDatabase db = AppDatabase.getInstance(getContext());
+                // Keep in mind that this insertAll query will be blocking the main thread, so the
+                // program will be stuck at this line of code until the query finishes.
+                db.bookDao().insertAll(bestsellers);
 
-                bookAdapter.setData(bestsellers);
+                // After inserting, I want to get what's in the database now.
+                List<Book> listBooksFromDatabase = db.bookDao().getAll();
+
+                // Convert list to arraylist
+                ArrayList<Book> booksFromDatabase = new ArrayList<Book>(listBooksFromDatabase);
+
+                bookAdapter.setData(booksFromDatabase);
                 recyclerView.setAdapter(bookAdapter);
 
                 // It is a good idea to include this line after we are done with the requestQueue.

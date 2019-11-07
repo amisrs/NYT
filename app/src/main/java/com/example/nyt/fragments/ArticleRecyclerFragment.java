@@ -74,6 +74,8 @@ public class ArticleRecyclerFragment extends Fragment {
         requestQueue.add(stringRequest);
 
         return view;
+
+
     }
 
     // This is just an example of a way that the Fragment can communicate with the parent Activity.

@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.example.nyt.FakeDatabase;
 import com.example.nyt.R;
+import com.example.nyt.database.AppDatabase;
 import com.example.nyt.model.Book;
 
 public class BookDetailActivity extends AppCompatActivity {
@@ -36,7 +37,8 @@ public class BookDetailActivity extends AppCompatActivity {
         Intent intent = getIntent();
 
         long isbn = intent.getLongExtra("isbn", 0);
-        Book book = FakeDatabase.getBookByIsbn(isbn);
+        AppDatabase db = AppDatabase.getInstance(this);
+        Book book = db.bookDao().findBookByIsbn(isbn);
 
         titleTextView.setText(book.getTitle());
         authorTextView.setText(book.getAuthor());

@@ -1,8 +1,15 @@
 # NYT
  
-Currently the baseline app for Week 7 INFS3634.
+Currently the baseline app for Week 8 INFS3634.
 
-You will need to know how everything in this app works to be able to continue in Week 8.
+You will need to know how everything in this app works to be able to continue in Week 9.
+
+**Week 8**
+- Convert Book class to a Room entity.
+- Add BookDao interface defining database interactions for the Book entity.
+- Add AppDatabase class containing a getInstance method to access a singleton instance of the database.
+- Modify BookRecyclerFragment to save Books to the database after fetching from API, and then displaying books from the database.
+- Update BookDetailActivity to retrieve book data from real database.
 
 **Week 7**
 - Use Volley instead of FakeAPI to get a JSON response for data.

@@ -18,10 +18,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.nyt.ArticleAdapter;
+import com.example.nyt.asynctask.AsyncTaskInsertDelegate;
+import com.example.nyt.asynctask.AsyncTaskGetDelegate;
 import com.example.nyt.BookAdapter;
-import com.example.nyt.FakeAPI;
-import com.example.nyt.FakeDatabase;
+import com.example.nyt.asynctask.GetBooksAsyncTask;
+import com.example.nyt.asynctask.InsertBooksAsyncTask;
 import com.example.nyt.R;
 import com.example.nyt.database.AppDatabase;
 import com.example.nyt.model.BestsellerList;
@@ -29,16 +30,15 @@ import com.example.nyt.model.BestsellerListResponse;
 import com.example.nyt.model.Book;
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BookRecyclerFragment extends Fragment {
+public class BookRecyclerFragment extends Fragment implements AsyncTaskInsertDelegate, AsyncTaskGetDelegate {
     private RecyclerView recyclerView;
-
+    private BookAdapter bookAdapter;
 
     public BookRecyclerFragment() {
         // Required empty public constructor
@@ -53,8 +53,7 @@ public class BookRecyclerFragment extends Fragment {
         recyclerView = view.findViewById(R.id.rv_main);
         LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
         recyclerView.setLayoutManager(layoutManager);
-
-        final BookAdapter bookAdapter = new BookAdapter();
+        bookAdapter = new BookAdapter();
 
         // Start Volley stuff
         // 1. Create request queue.
@@ -80,35 +79,29 @@ public class BookRecyclerFragment extends Fragment {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                // This method, onResponse, is executed after a response is received for your request.
-                // Logically, this means it is the only place where you are guarantee that a response
-                // has been received.
-                // So, you must write all the code that depends on having a response here.
-                // For example, converting the response to objects using Gson.
-
                 Gson gson = new Gson();
                 BestsellerListResponse bestsellerListResponse = gson.fromJson(response, BestsellerListResponse.class);
                 BestsellerList bestsellerList = bestsellerListResponse.getResults();
 
                 List<Book> bestsellers = bestsellerList.getBooks();
-
-                // I save my results to the database so I can retrieve it later in my other activities.
                 AppDatabase db = AppDatabase.getInstance(getContext());
-                // Keep in mind that this insertAll query will be blocking the main thread, so the
-                // program will be stuck at this line of code until the query finishes.
-                db.bookDao().insertAll(bestsellers);
+                // Our db insert method call used to be here last week. But that's on the main thread.
+                // So we replace it with an AsyncTask that runs the query on a worker thread.
+//                db.bookDao().insertAll(bestsellers);
+                InsertBooksAsyncTask insertBooksAsyncTask = new InsertBooksAsyncTask();
+                insertBooksAsyncTask.setDatabase(db);
+                // I'm giving a reference to THIS fragment to be the delegate. I'm telling the
+                // AsyncTask, that the fragment that I'm in right now, will be your delegate.
+                insertBooksAsyncTask.setDelegate(BookRecyclerFragment.this);
 
-                // After inserting, I want to get what's in the database now.
-                List<Book> listBooksFromDatabase = db.bookDao().getAll();
+                Book[] books = bestsellers.toArray(new Book[bestsellers.size()]);
+                insertBooksAsyncTask.execute(books);
 
-                // Convert list to arraylist
-                ArrayList<Book> booksFromDatabase = new ArrayList<Book>(listBooksFromDatabase);
+                // Notice that I'm not setting the data of the adapter here. This is because
+                // after the AsyncTask is executed, we can't guarantee that the results exist yet.
+                // We need to rely on the delegate pattern, for the AsyncTask to pass us the results
+                // first, before we can use the result in the UI.
 
-                bookAdapter.setData(booksFromDatabase);
-                recyclerView.setAdapter(bookAdapter);
-
-                // It is a good idea to include this line after we are done with the requestQueue.
-                // It just closes the queue.
                 requestQueue.stop();
             }
         };
@@ -135,4 +128,31 @@ public class BookRecyclerFragment extends Fragment {
         return view;
     }
 
+    // This method is required to be implemented, because we use the interface. This method is called
+    // from the AsyncTask once the task has completed. It gives the result back to this class so
+    // that we can use the result to update our UI.
+    @Override
+    public void handleTaskResult(String result) {
+        Toast.makeText(getContext(), "AsyncTask insert done", Toast.LENGTH_SHORT).show();
+
+        // In this case, this method is called after the Insert task is done. After inserting, I
+        // want to update my UI to reflect the new list of Books. To do this, I have made another
+        // AsyncTask that runs to get the Books from the database.
+        // So after my Insert AsyncTask finishes, this method will be called and it will start
+        // a second AsyncTask to get the books.
+        GetBooksAsyncTask getBooksAsyncTask = new GetBooksAsyncTask();
+        getBooksAsyncTask.setDatabase(AppDatabase.getInstance(getContext()));
+        getBooksAsyncTask.setDelegate(this);
+        getBooksAsyncTask.execute();
+    }
+
+    // This is a method for the second interface. This Fragment can be a delegate for two different
+    // AsyncTasks that return different types of results, because I implement the two interfaces.
+    @Override
+    public void handleTaskGetResult(List<Book> books) {
+        // When the get AsyncTask is done, it'll return to me the list of books. Then I just update
+        // the UI.
+        bookAdapter.setData(books);
+        recyclerView.setAdapter(bookAdapter);
+    }
 }

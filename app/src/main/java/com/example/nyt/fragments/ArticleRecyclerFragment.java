@@ -18,7 +18,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.nyt.ArticleAdapter;
-import com.example.nyt.FakeAPI;
 import com.example.nyt.FakeDatabase;
 import com.example.nyt.activities.MainActivity;
 import com.example.nyt.R;

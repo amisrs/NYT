@@ -2,7 +2,14 @@
  
 Currently the baseline app for Week 8 INFS3634.
 
-You will need to know how everything in this app works to be able to continue in Week 9.
+You should know how everything in this app works!
+
+**Week 9**
+- Add GetBooksAsyncTask and InsertBooksAsyncTask to move database queries off of the main thread.
+- Add AsyncTaskGetDelegate and AsyncTaskInsertDelegate interfaces to be used in the delegates for the tasks.
+- Modify BookRecyclerFragment to use AsyncTasks (and implement the delegate interfaces).
+- Remove .allowMainThreadQueries() from AppDatabase db instance builder.
+- Handle the case for Articles not having an image causing crashes (ArticleAdapter and ArticleRecyclerFragment)
 
 **Week 8**
 - Convert Book class to a Room entity.
